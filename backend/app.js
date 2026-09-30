@@ -19,15 +19,13 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://frontend-guides-ten-6nrz3a192.vercel.app",
+  "https://frontend-gules-ten-6nrz3nal92.vercel.app",
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests without an Origin header
-      // such as Postman or server-to-server requests.
       if (!origin) {
         return callback(null, true);
       }
