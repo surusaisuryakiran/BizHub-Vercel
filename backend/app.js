@@ -13,15 +13,46 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
-const allowedOrigin = process.env.FRONTEND_URL;
+/* =====================================================
+   CORS CONFIGURATION
+   ===================================================== */
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://frontend-guides-ten-6nrz3a192.vercel.app",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: allowedOrigin || true,
-    credentials: true
+    origin: function (origin, callback) {
+      // Allow requests without an Origin header
+      // such as Postman or server-to-server requests.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
+/* =====================================================
+   MIDDLEWARE
+   ===================================================== */
+
 app.use(express.json());
+
+/* =====================================================
+   ROOT ROUTE
+   ===================================================== */
 
 app.get("/", (req, res) => {
   res.json({
@@ -29,6 +60,10 @@ app.get("/", (req, res) => {
     status: "ok"
   });
 });
+
+/* =====================================================
+   DATABASE CONNECTION
+   ===================================================== */
 
 // Connect only when an API request needs the database.
 // The connection is cached across warm Vercel instances.
@@ -41,6 +76,10 @@ app.use("/api", async (req, res, next) => {
   }
 });
 
+/* =====================================================
+   API ROUTES
+   ===================================================== */
+
 app.use("/api/users", userRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -50,12 +89,18 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/auth", authRoutes);
 
-// Explicit JSON error response for Vercel/Express.
+/* =====================================================
+   ERROR HANDLER
+   ===================================================== */
+
 app.use((err, req, res, next) => {
   console.error(err);
+
   res.status(500).json({
     message: "Internal server error",
-    ...(process.env.NODE_ENV !== "production" ? { error: err.message } : {})
+    ...(process.env.NODE_ENV !== "production"
+      ? { error: err.message }
+      : {})
   });
 });
 
