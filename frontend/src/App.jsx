@@ -186,27 +186,86 @@ function App() {
     /* =====================================================
        VENDOR PRODUCT CRUD
     ===================================================== */
-    const addProduct = (newProduct) => {
-        setStoreData((prev) => ({
-            ...prev,
-            products: [newProduct, ...prev.products]
-        }));
+    const addProduct = async (newProduct) => {
+        try {
+            const payload = {
+                productName: newProduct.name,
+                price: newProduct.unitPrice,
+                stockQuantity: newProduct.stock,
+                description: newProduct.description || "",
+                category: newProduct.categoryId,
+                vendor: newProduct.vendorId,
+                status: "available"
+            };
+
+            const createdProduct = await api.createProduct(payload);
+            const normalizedProduct = normalizeProduct(createdProduct);
+
+            setStoreData((prev) => ({
+                ...prev,
+                products: [normalizedProduct, ...prev.products]
+            }));
+
+            alert("Product added successfully!");
+        } catch (error) {
+            console.error("Create product error:", error);
+            alert(`Failed to add product: ${error.message}`);
+        }
     };
 
-    const updateProduct = (updatedProduct) => {
-        setStoreData((prev) => ({
-            ...prev,
-            products: prev.products.map((p) =>
-                p.productId === updatedProduct.productId ? updatedProduct : p
-            )
-        }));
+    const updateProduct = async (updatedProduct) => {
+        try {
+            const payload = {
+                productName: updatedProduct.name,
+                price: updatedProduct.unitPrice,
+                stockQuantity: updatedProduct.stock,
+                description: updatedProduct.description || "",
+                category: updatedProduct.categoryId,
+                vendor: updatedProduct.vendorId,
+                status: updatedProduct.status === "active"
+                    ? "available"
+                    : updatedProduct.status
+            };
+
+            const updated = await api.updateProduct(
+                updatedProduct.productId,
+                payload
+            );
+
+            const normalizedProduct = normalizeProduct(updated);
+
+            setStoreData((prev) => ({
+                ...prev,
+                products: prev.products.map((p) =>
+                    p.productId === updatedProduct.productId
+                        ? normalizedProduct
+                        : p
+                )
+            }));
+
+            alert("Product updated successfully!");
+        } catch (error) {
+            console.error("Update product error:", error);
+            alert(`Failed to update product: ${error.message}`);
+        }
     };
 
-    const deleteProduct = (productId) => {
-        setStoreData((prev) => ({
-            ...prev,
-            products: prev.products.filter((p) => p.productId !== productId)
-        }));
+    const deleteProduct = async (productId) => {
+        try {
+            await api.deleteProduct(productId);
+
+            setStoreData((prev) => ({
+                ...prev,
+                products: prev.products.filter(
+                    (p) => p.productId !== productId
+                )
+            }));
+
+            alert("Product deleted successfully!");
+        } catch (error) {
+            console.error("Delete product error:", error);
+            alert(`Failed to delete product: ${error.message}`);
+        }
     };
 
     /* =====================================================
